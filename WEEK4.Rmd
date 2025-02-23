@@ -1,0 +1,125 @@
+---
+title: 'DATA 607: Week 4'
+author: "Cindy Lin"
+date: "2025-02-20"
+output:
+  pdf_document: default
+  html_document: default
+  
+---
+
+# INTRODUCTION
+
+Week 4 assignment's goal is to go through how to tidy and transform data. There are cases where the data is capture for the ease of data collection and not with data analysis in mind. 
+
+## Loading library
+
+```{r library, include= FALSE}
+library (tidyverse)
+
+```
+I am loading the tidyverse library because there are functions that can help tidy the loaded data
+
+## Loading the data
+```{r getdata, message=FALSE}
+
+get_data <- read.csv("Week4_Flight_data.csv", header = TRUE)
+
+get_data
+
+```
+Load the csv file from my working directory and viewing the data. 
+
+
+## Updating the column headers and removing empty rows
+```{r, message=FALSE}
+
+colnames(get_data)[1:2] <- c("airline", "status")
+#rename columns
+
+data <- na.omit(get_data)
+#remove empty row
+
+data_filled <- data %>% 
+  mutate(airline = ifelse(airline == "", NA, airline)) %>%
+  fill(airline, .direction = "down")
+#fill didn't work at first because the empty was not NA not it was just empty string. 
+#Added the line to make empty string to be NA. 
+
+
+data_filled
+
+```
+
+I addressed the empty cells under airline and add in the expected data and removed any empty rows. 
+
+## Long data
+```{r long data}
+
+long_data <- data_filled %>%
+  mutate(across(c("Los.Angeles", "Phoenix",  "San.Diego", "San.Francisco", "Seattle"), 
+as.character)) %>%
+# make all the data type the same
+
+  pivot_longer(cols = c("Los.Angeles", "Phoenix",  "San.Diego", "San.Francisco", "Seattle"),
+  names_to = "city",
+  values_to = "flight_count") %>%
+  mutate(flight_count = as.numeric(flight_count))
+
+
+long_data
+```
+Transformed the data to a long form for analysis and the reason is so I can aggregate and see any trends. 
+
+## Analysis - airline
+```{r, message=FALSE}
+
+airline_summary <- long_data %>%
+  group_by(airline) %>%
+  summarise(
+    flight_delay = sum(flight_count[status == 'delayed']),
+    flight_ontime = sum(flight_count[status == 'on time']),
+    total_flight = sum(flight_count),
+    ontime_rate = flight_ontime/total_flight,
+    delay_rate = flight_delay/total_flight
+  )
+
+
+airline_summary
+
+
+```
+AM WEST has a better on time rate than Alaska but they also have almost twice the amount of total flight. 
+
+
+## Analysis - by city
+```{r, message=FALSE}
+
+airline_summary <- long_data %>%
+  group_by(airline, city) %>%
+  summarise(
+    flight_delay = sum(flight_count[status == 'delayed']),
+    flight_ontime = sum(flight_count[status == 'on time']),
+    total_flight = sum(flight_count),
+    ontime_rate = flight_ontime/total_flight,
+    delay_rate = flight_delay/total_flight
+  )
+
+ggplot(airline_summary, aes(x = city, y = ontime_rate, fill = airline)) + 
+  geom_bar(stat= "identity", position = "dodge")
+
+airline_summary
+
+
+```
+Phoenix for both airline had the best on time rate while San Francisco had the lowest on time rate for both airline. One curious note here is that in the previous analysis, we concluded that AM WEST had the higher on time rate, but when we look at the on time rate for the individual cities, we see that Alaska airline actually has a better on time rate for all the cities. 
+
+# CONCLUSION
+If I was traveling and I had to choose between AM WEST or Alaska, I would most likely select Alaska, especially if I am going to San Francisco or Seattle, since their differences are greater there (with Alaska having a better on time rate). 
+
+Lesson learned from this: 
+
+Simpson's paradox - a trend appears one way (Alaska with a better on time rate for all cities) and either disappears/reverses when combined (AM WEST having a better on time rate overall).
+
+Wide table is easier to read and is useful for fixed attributes so if I want to know the count for on time for Alaska airline for the city = Los Angeles - I can easily see "497". This is quicker than if this was in long format. However, if I want know the average of all the on time count per airline, this would be best for long format. 
+
