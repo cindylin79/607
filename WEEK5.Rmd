@@ -1,0 +1,148 @@
+---
+title: 'DATA 607: Week 5'
+author: "Cindy Lin"
+date: "2025-02-24"
+output:
+  pdf_document: default
+  html_document: default
+  
+---
+
+# INTRODUCTION
+
+Week 5 project's goal is to transform a text file of a certain structure to a CSV file that display the following information:
+
+Player’s Name, Player’s State, Total Number of Points, Player’s Pre-Rating, and Average Pre Chess Rating of Opponents
+
+
+## Loading library
+
+```{r library, include= FALSE}
+library (tidyverse)
+
+```
+I am loading the tidyverse library because there are functions that can help tidy the loaded data
+
+## Loading the data and removing rows
+```{r getdata, message=FALSE}
+
+get_data <- read.delim("tournamentinfo.txt", sep = "|", header = TRUE, skip = 1)
+# Skip the first row to get the header
+
+get_data <- get_data[!grepl("--------", get_data$Pair), ] 
+# Remove "-----"
+
+get_data <- get_data[-1,]
+# Remove the first line
+
+glimpse(get_data)
+
+```
+Load the text file from my working directory and removing non-data rows.
+
+## Changing the table structures 
+
+```{r table structure}
+odd_rows <- get_data[seq(1, nrow(get_data), by = 2), , drop = FALSE]
+#This had the player name, number of points and the rounds
+
+odd_rows <- odd_rows[grepl("\\d", odd_rows$Pair), ]
+#remove empty rows
+
+odd_rows <- odd_rows %>% 
+  mutate_at(vars(4:10), ~ str_replace_all(., "[^0-9]", ""))
+#remove the letter in the round columns
+
+even_rows <- get_data[seq(2, nrow(get_data), by = 2), , drop = FALSE]
+#This has the state and the pre-rating 
+
+even_rows <- even_rows %>% mutate(extracted_number = 
+             str_extract(Player.Name, "(?<=R:).*?(?=->)"))
+#extract the player's pre-rating
+
+even_rows <- even_rows %>% 
+  mutate(extracted_digits = ifelse 
+  (str_detect(trimws(even_rows$extracted_number), "P"), 
+   str_extract(trimws(even_rows$extracted_number), "^\\d+(?=P)"), 
+   trimws(even_rows$extracted_number)))
+#remove the "P" in some of the pre-rating
+
+even_rows <- even_rows %>% mutate(Ranking = as.numeric(even_rows$extracted_digits))
+#make the ranking to be numeric
+
+df_restructured <- data.frame(Odd_Values = odd_rows, 
+                             Even_Values = even_rows$Pair, even_rows$Ranking)
+#combine the two tables (even and odd)
+
+df_col_rename <- df_restructured %>% rename(
+  Pair = Odd_Values.Pair,
+  Player_name = Odd_Values.Player.Name,
+  Total_Num_of_Points = Odd_Values.Total,
+  Round_1 = Odd_Values.Round,
+  Round_2 = Odd_Values.Round.1,
+  Round_3 = Odd_Values.Round.2,
+  Round_4 = Odd_Values.Round.3,
+  Round_5 = Odd_Values.Round.4,
+  Round_6 = Odd_Values.Round.5,
+  Round_7 = Odd_Values.Round.6,
+  Player_State = Even_Values,
+  Player_PreRating = even_rows.Ranking
+  # renamed all the columns in preparation for the final result
+  
+)
+
+```
+Since the original data set had data in different location (where part of the data are in the odd rows and the other part are in even rows), I need to organize it in a way that I can transform it to the final format where all the pieces is in one place. So I separate the pieces in a consistent format and then re-combine them again that results in all the data in their respective columns.  
+
+## Transform wide to long
+``` {r long format}
+
+Long_format <- df_col_rename%>%
+  pivot_longer(cols = contains("Round"), names_to = "Round", values_to = "Opponent_ID") %>%
+  drop_na(Opponent_ID)
+# Transform to long format where all the round columns (1,2,3..) is now just one column 
+#called Round and the value in those columns are now in new column called Opponent ID
+
+Long_format <- Long_format %>%
+  mutate(Opponent_ID = as.numeric(Opponent_ID))
+
+df_col_rename <- df_col_rename %>%
+  mutate(Pair = as.numeric(Pair))
+#prepare the data type to be the same data type for joining
+
+
+```
+I need to get the average as part of the final result so I transform the wide structure to a long format to prepare to aggregate later. 
+
+## Joining tables 
+```{r joining table }
+df_with_opponent_rank <- Long_format %>%
+  left_join(df_col_rename %>% select(Pair, Player_PreRating), by = c("Opponent_ID" = "Pair"))
+#joined Long_format and df_col_rename to get the opponent rank
+
+```
+Since I need to get the ranking of the opponents, I created another column that match the opponent's ID and pull the ranking next to that column. This way I have the player and a list of their opponents and their opponent's ranking.
+
+## Averaging the Opponent's Pre-Rating
+```{r }
+final_table <- df_with_opponent_rank %>%
+  group_by(Pair,Player_name, Player_State, Total_Num_of_Points, Player_PreRating.x) %>%
+  summarise(Avg_Pre_Chess_Rating_of_Opponents = round(mean(Player_PreRating.y, na.rm = TRUE)))
+            
+```
+I averaged the opponent's pre-rating and grouped it by the rest of the attributes which ends up giving me a player per row. 
+
+## Generate CSV file
+```{r }
+write.csv(final_table, "tournamentinfo.csv")
+
+```
+Saved the CSV file to working directory
+
+# CONCLUSION
+For this project, I was able to utilize the skills learned from prior weeks. In particular, loading and transforming data (wide to long) and regular expressions (retaining digits, dropping letters, etc).
+
+Take Away from the Assignment-  
+*Sequencing (seq) rows - allows for getting even or odd rows which is another tool to help transform the data in the desire format. 
+
+*Joining table - similarity to SQL (which allows for the search and match type of function I needed for averaging the opponent's ranking)

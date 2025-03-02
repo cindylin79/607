@@ -1,5 +1,5 @@
 ---
-title: 'DATA 607: Week 3'
+title: 'DATA 607: Week 3 - Resubmission'
 author: "Cindy Lin"
 date: "2025-2-13"
 output:
@@ -22,11 +22,14 @@ I am loading the necessary library to perform the tasks assigned
 ## Part I - Normalization
 ```{r part I, message=FALSE}
 
+
 students <- data.frame(
   student_id = c(1,2,3,4),
   name = c("Spongebob", "Sandy", "Patrick", "Squidward"),
   class_level = c("Freshman", "Sophomore", "Junior", "Senior")
 )
+#demonstration of 1NF form
+
 
 courses <- data.frame (
   course_id = c(001, 002, 003, 004),
@@ -44,7 +47,8 @@ print(students)
 print(courses)
 print(Enrollment)
 ```
-The three database demonstrate normalization such as making sure a single column has a single value, adding primary key and having all attributes depends on the primary key and only on the primary key.
+Goal of normalization - efficiency, consistency, and accuracy. Students table shows 1NF as it has a primary key, consistent data type and no repeating groups in the column. 
+    
 
 ## Part II - Character Manipulation
 
