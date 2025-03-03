@@ -28,27 +28,39 @@ students <- data.frame(
   name = c("Spongebob", "Sandy", "Patrick", "Squidward"),
   class_level = c("Freshman", "Sophomore", "Junior", "Senior")
 )
-#demonstration of 1NF form
-
 
 courses <- data.frame (
   course_id = c(001, 002, 003, 004),
   course_name = c("English 101", "English 102", "Math 101", "PHIL 101")
 )
 
-Enrollment <- data.frame(
-  enrollment_id = c(1,2,3,4,5,6),
-  student_id = c(1,2,3,4,1,2),
-  course_id = c(001, 002, 003, 004, 001, 002),
-  grade = c("A", "B", "C", "D", "F", "A-")
+
+grades <- data.frame (
+  grade_id = c(1,2,3,4,5,6),
+  grade = c("A", "A-", "B", "C", "D", "F")
 )
+
+
+Enrollment <- data.frame(
+  grade_id = c(1,2,3,4,5,6),
+  student_id = c(1,2,3,4,1,2),
+  course_id = c(001, 002, 003, 004, 001, 002)
+)
+
 
 print(students)
 print(courses)
 print(Enrollment)
 ```
-Goal of normalization - efficiency, consistency, and accuracy. Students table shows 1NF as it has a primary key, consistent data type and no repeating groups in the column. 
-    
+Goal of normalization - efficiency, consistency, and accuracy. 
+Example - 
+Students, courses, grades, and enrollment tables show 1NF as it has a primary key, consistent data type and no repeating groups in the column. 
+
+Students, courses, grades, and enrollment tables shows 2NF as the attributes are dependent on the primary key (enrollment table is dependent on composite key).
+
+Students, courses, grades, and enrollment tables shows 3NF as no other non-key attributes are dependent on other non-key attributes (enrollment table is dependent on both composite key - student ID and course ID).
+
+
 
 ## Part II - Character Manipulation
 
@@ -76,13 +88,9 @@ Loading the data from github and using the function "grep()" to search "Data" an
 strings <- c("aaabbb", "xyyx", "abba", "abc", "xyz", "hello", "wow", "123", "abab", "abaca", "abcdcba", "wwwee", "ww", "ana", "awaw", "axabaea", "zywvvwyz")
 
 matches <- grep("(.)\\1\\1", strings, value = TRUE)
-#find matches that have at least 3 of the same repeating character
-
 matches1 <- grep("(.)(.)\\2\\1", strings, value = TRUE)
-#find matches that have that first and last character to be the same and have at least one the same repeating character in between
-
 matches2 <- grep("(..)\\1", strings, value = TRUE)
-#find matches that have alternating repeating characters
+
 
 matches3 <- grep("(.).\\1.\\1", strings, value = TRUE)
 #find matches that have the same beginning character and have that repeat every other character
@@ -98,7 +106,43 @@ print(matches3)
 print(matches4)
 
 ```
+(.)\1\1
+Explain - 
+(.) - capture a group 
+\1  - matches the character in the capture (above)
+\1  - repeat above again
 
+what the code does- 
+find matches that have at least 3 of the same repeating character
+
+"(.)(.)\\2\\1"
+Explain - 
+(.) - capture the first group
+(.) - capture the second group
+\\2 - match the character in the second capture
+\1  - match the character in the first capture
+
+what the code does- 
+find matches that have that first and last character to be the same and have at least one the same repeating character in between. I think of it as a mirror pattern. 
+
+(..)\1
+Explain - 
+(..) - capture a group that matches two character
+\1  - matches the character in the capture (above)
+
+what the code does- 
+find matches that have alternating repeating characters
+
+"(.).\\1.\\1"
+Explain - 
+(.) - capture a group 
+.   - 
+\1  - matches the character in the capture (above)
+\1  - repeat above again
+
+what the code does- 
+find matches that have at least 3 of the same repeating character
+"(.)(.)(.).*\\3\\2\\1"
 
 ## Part IV
 

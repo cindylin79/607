@@ -20,6 +20,7 @@ Player’s Name, Player’s State, Total Number of Points, Player’s Pre-Rating
 ```{r library, include= FALSE}
 library (tidyverse)
 
+getwd()
 ```
 I am loading the tidyverse library because there are functions that can help tidy the loaded data
 
@@ -136,7 +137,12 @@ I averaged the opponent's pre-rating and grouped it by the rest of the attribute
 ```{r }
 write.csv(final_table, "tournamentinfo.csv")
 
+
+knitr::kable(final_table) %>%
+  kableExtra::kable_styling(font_size = 6)
+
 ```
+
 Saved the CSV file to working directory
 
 # CONCLUSION
