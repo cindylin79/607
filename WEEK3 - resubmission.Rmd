@@ -1,7 +1,7 @@
 ---
 title: 'DATA 607: Week 3 - Resubmission'
 author: "Cindy Lin"
-date: "2025-2-13"
+date: "2025-3-11"
 output:
   pdf_document: default
   html_document: default
@@ -85,7 +85,7 @@ Loading the data from github and using the function "grep()" to search "Data" an
 
 ```{r part III, message=FALSE}
 
-strings <- c("aaabbb", "xyyx", "abba", "abc", "xyz", "hello", "wow", "123", "abab", "abaca", "abcdcba", "wwwee", "ww", "ana", "awaw", "axabaea", "zywvvwyz")
+strings <- c("aaabbb", "xyyx", "abba", "abc", "xyz", "hello", "wow", "123", "abab", "abaca", "abcdcba", "wwwee", "ww", "ana", "awaw", "axabaea", "zywvvwyz", "eleven")
 
 matches <- grep("(.)\\1\\1", strings, value = TRUE)
 matches1 <- grep("(.)(.)\\2\\1", strings, value = TRUE)
@@ -106,7 +106,7 @@ print(matches3)
 print(matches4)
 
 ```
-(.)\1\1
+(.)\1\1 
 Explain - 
 (.) - capture a group 
 \1  - matches the character in the capture (above)
@@ -115,7 +115,7 @@ Explain -
 what the code does- 
 find matches that have at least 3 of the same repeating character
 
-"(.)(.)\\2\\1"
+"(.)(.)\\2\\1" 
 Explain - 
 (.) - capture the first group
 (.) - capture the second group
@@ -125,30 +125,45 @@ Explain -
 what the code does- 
 find matches that have that first and last character to be the same and have at least one the same repeating character in between. I think of it as a mirror pattern. 
 
-(..)\1
+(..)\\1 
 Explain - 
 (..) - capture a group that matches two character
-\1  - matches the character in the capture (above)
+\\1  - matches the same two character in the capture (above)
 
 what the code does- 
-find matches that have alternating repeating characters
+find matches that have repeating two capture characters
+
 
 "(.).\\1.\\1"
 Explain - 
-(.) - capture a group 
-.   - 
-\1  - matches the character in the capture (above)
-\1  - repeat above again
+(.) - capture a character in a group
+.   - single character
+\\1 - matches the character in group 1 
+.   - single character
+\\1  - matches the character in group 1
 
 what the code does- 
-find matches that have at least 3 of the same repeating character
+find matches that have at least 3 of the same repeating character in group and and can have other characters in between as long as there is the same character three times
+
+
 "(.)(.)(.).*\\3\\2\\1"
+(.) - capture a character in a group 1
+(.) - capture a character in a group 2
+(.) - capture a character in a group 3
+.   - single character
+*   - match any character
+\\3 - match group 3
+\\2 - match group 2
+\\1 - match group 1
+
+what the code does - it mirrors three characters so the first character will be the last and second character will be second to last and third character will be the third from the last. 
+
 
 ## Part IV
 
 ```{r part IV, message=FALSE}
 
-stringstwo <- c("rar", "hello", "papa", "aba", "aweerrttffa", "chyech", "eleven")
+stringstwo <- c("rar", "hello", "papa", "aba", "aweerrttffa", "chyech", "eleven", "abqaca")
 
 matches5 <- grep("^(.).*\\1$", stringstwo, value = TRUE)
 #Start and end with the same character.
@@ -164,6 +179,38 @@ print(matches5)
 print(matches6)
 print(matches7)
 ```
+
+"^(.).*\\1$"
+
+^ - start of the string
+(.) - capture a character in a group 
+.   - single character
+*   - match any character
+\\1 - match group 1
+
+what the codes does - find a string that has the same character beginning and the end of the string.
+
+
+"(..).*\\1"
+
+(..) - capture two character in a group 
+.   - single character
+*   - match any character
+\\1 - match group 1
+
+what the codes does - find a string that has the same two character beginning and the end of the string.
+
+"(.).*\\1.*\\1"
+
+(.) - capture a character in a group 
+.   - single character
+*   - match any character
+\\1 - match group 1
+.   - single character
+\\1 - match group 1
+
+what the codes does - find matches that have at least 3 of the same repeating character in group and and can have other characters in between as long as there is the same character three times
+
 
 # CONCLUSION 
 In this week's assignment, we explored various data manipulation techniques, which includes normalization, character manipulation, and regular expression. These are important for organizing and analyzing with greater efficiency. 
