@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inventory>
+  <item>
+    <Category>Electronics</Category>
+    <Item.Name>Smartphone</Item.Name>
+    <Item.ID>101</Item.ID>
+    <Brand>TechBrand</Brand>
+    <Price>699.99</Price>
+    <Variation.ID>101-A</Variation.ID>
+    <Variation.Details>Color: Black, Storage: 64GB </Variation.Details>
+  </item>
+  <item>
+    <Category>Electronics</Category>
+    <Item.Name>Smartphone</Item.Name>
+    <Item.ID>101</Item.ID>
+    <Brand>TechBrand</Brand>
+    <Price>699.99</Price>
+    <Variation.ID>101-B</Variation.ID>
+    <Variation.Details>Color: White, Storage: 128GB </Variation.Details>
+  </item>
+  <item>
+    <Category>Electronics</Category>
+    <Item.Name>Laptop</Item.Name>
+    <Item.ID>102</Item.ID>
+    <Brand>CompuBrand</Brand>
+    <Price>1099.99</Price>
+    <Variation.ID>102-A</Variation.ID>
+    <Variation.Details>Color: Silver, Storage: 256GB </Variation.Details>
+  </item>
+  <item>
+    <Category>Electronics</Category>
+    <Item.Name>Laptop</Item.Name>
+    <Item.ID>102</Item.ID>
+    <Brand>CompuBrand</Brand>
+    <Price>1099.99</Price>
+    <Variation.ID>102-B</Variation.ID>
+    <Variation.Details>Color: Space Gray, Storage: 512GB </Variation.Details>
+  </item>
+  <item>
+    <Category>Home Appliances</Category>
+    <Item.Name>Refrigerator</Item.Name>
+    <Item.ID>201</Item.ID>
+    <Brand>HomeCool</Brand>
+    <Price>899.99</Price>
+    <Variation.ID>201-A</Variation.ID>
+    <Variation.Details>Color: Stainless Steel, Capacity: 20 cu ft </Variation.Details>
+  </item>
+  <item>
+    <Category>Home Appliances</Category>
+    <Item.Name>Refrigerator</Item.Name>
+    <Item.ID>201</Item.ID>
+    <Brand>HomeCool</Brand>
+    <Price>899.99</Price>
+    <Variation.ID>201-B</Variation.ID>
+    <Variation.Details>Color: White, Capacity: 18 cu ft </Variation.Details>
+  </item>
+  <item>
+    <Category>Home Appliances</Category>
+    <Item.Name>Washing Machine</Item.Name>
+    <Item.ID>202</Item.ID>
+    <Brand>CleanTech</Brand>
+    <Price>499.99</Price>
+    <Variation.ID>202-A</Variation.ID>
+    <Variation.Details>Type: Front Load, Capacity: 4.5 cu ft </Variation.Details>
+  </item>
+  <item>
+    <Category>Home Appliances</Category>
+    <Item.Name>Washing Machine</Item.Name>
+    <Item.ID>202</Item.ID>
+    <Brand>CleanTech</Brand>
+    <Price>499.99</Price>
+    <Variation.ID>202-B</Variation.ID>
+    <Variation.Details>Type: Top Load, Capacity: 5.0 cu ft </Variation.Details>
+  </item>
+  <item>
+    <Category>Clothing</Category>
+    <Item.Name>T-Shirt</Item.Name>
+    <Item.ID>301</Item.ID>
+    <Brand>FashionCo</Brand>
+    <Price>19.99</Price>
+    <Variation.ID>301-A</Variation.ID>
+    <Variation.Details>Color: Blue, Size: S </Variation.Details>
+  </item>
+  <item>
+    <Category>Clothing</Category>
+    <Item.Name>T-Shirt</Item.Name>
+    <Item.ID>301</Item.ID>
+    <Brand>FashionCo</Brand>
+    <Price>19.99</Price>
+    <Variation.ID>301-B</Variation.ID>
+    <Variation.Details>Color: Red, Size: M </Variation.Details>
+  </item>
+  <item>
+    <Category>Clothing</Category>
+    <Item.Name>T-Shirt</Item.Name>
+    <Item.ID>301</Item.ID>
+    <Brand>FashionCo</Brand>
+    <Price>19.99</Price>
+    <Variation.ID>301-C</Variation.ID>
+    <Variation.Details>Color: Green, Size: L </Variation.Details>
+  </item>
+  <item>
+    <Category>Clothing</Category>
+    <Item.Name>Jeans</Item.Name>
+    <Item.ID>302</Item.ID>
+    <Brand>DenimWorks</Brand>
+    <Price>49.99</Price>
+    <Variation.ID>302-A</Variation.ID>
+    <Variation.Details>Color: Dark Blue, Size: 32 </Variation.Details>
+  </item>
+  <item>
+    <Category>Clothing</Category>
+    <Item.Name>Jeans</Item.Name>
+    <Item.ID>302</Item.ID>
+    <Brand>DenimWorks</Brand>
+    <Price>49.99</Price>
+    <Variation.ID>302-B</Variation.ID>
+    <Variation.Details>Color: Light Blue, Size: 34 </Variation.Details>
+  </item>
+  <item>
+    <Category>Books</Category>
+    <Item.Name>Fiction Novel</Item.Name>
+    <Item.ID>401</Item.ID>
+    <Brand>-</Brand>
+    <Price>14.99</Price>
+    <Variation.ID>401-A</Variation.ID>
+    <Variation.Details>Format: Hardcover, Language: English </Variation.Details>
+  </item>
+  <item>
+    <Category>Books</Category>
+    <Item.Name>Fiction Novel</Item.Name>
+    <Item.ID>401</Item.ID>
+    <Brand>-</Brand>
+    <Price>14.99</Price>
+    <Variation.ID>401-B</Variation.ID>
+    <Variation.Details>Format: Paperback, Language: Spanish </Variation.Details>
+  </item>
+  <item>
+    <Category>Books</Category>
+    <Item.Name>Non-Fiction Guide</Item.Name>
+    <Item.ID>402</Item.ID>
+    <Brand>-</Brand>
+    <Price>24.99</Price>
+    <Variation.ID>402-A</Variation.ID>
+    <Variation.Details>Format: eBook, Language: English </Variation.Details>
+  </item>
+  <item>
+    <Category>Books</Category>
+    <Item.Name>Non-Fiction Guide</Item.Name>
+    <Item.ID>402</Item.ID>
+    <Brand>-</Brand>
+    <Price>24.99</Price>
+    <Variation.ID>402-B</Variation.ID>
+    <Variation.Details>Format: Paperback, Language: French </Variation.Details>
+  </item>
+  <item>
+    <Category>Sports Equipment</Category>
+    <Item.Name>Basketball</Item.Name>
+    <Item.ID>501</Item.ID>
+    <Brand>SportsGear</Brand>
+    <Price>29.99</Price>
+    <Variation.ID>501-A</Variation.ID>
+    <Variation.Details>Size: Size 7, Color: Orange </Variation.Details>
+  </item>
+  <item>
+    <Category>Sports Equipment</Category>
+    <Item.Name>Tennis Racket</Item.Name>
+    <Item.ID>502</Item.ID>
+    <Brand>RacketPro</Brand>
+    <Price>89.99</Price>
+    <Variation.ID>502-A</Variation.ID>
+    <Variation.Details>Material: Graphite, Color: Black </Variation.Details>
+  </item>
+  <item>
+    <Category>Sports Equipment</Category>
+    <Item.Name>Tennis Racket</Item.Name>
+    <Item.ID>502</Item.ID>
+    <Brand>RacketPro</Brand>
+    <Price>89.99</Price>
+    <Variation.ID>502-B</Variation.ID>
+    <Variation.Details>Material: Aluminum, Color: Silver </Variation.Details>
+  </item>
+</inventory>

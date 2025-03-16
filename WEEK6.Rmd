@@ -1,0 +1,224 @@
+---
+title: 'DATA 607: Week 6'
+author: "Cindy Lin and William Forero"
+date: "2025-03-05"
+output:
+  pdf_document: default
+  html_document: default
+  
+---
+
+# INTRODUCTION
+
+Week 6 project’s goal is to transform three untidy data set and tidy/transform them and generate the
+discussed analysis.
+Data Set#1 - tax dataset for 2022
+
+## Loading library
+
+```{r library}
+
+library (tidyverse)
+library (janitor)
+
+```
+I am loading the tidyverse library because there are functions that can help tidy the loaded data. Janitor library is needed for the clean_names function.
+
+## Loading the data and removing rows
+```{r getdata, message=FALSE}
+get_data <- read.csv("22.csv", skip = 3)
+# Skip the first row to get the header
+get_data <- get_data %>% select(-c(22:25))
+# Remove duplicate entries
+glimpse(get_data)
+
+```
+Loading the data 
+
+
+## Renaming columns
+```{r columns}
+
+colnames(get_data) <- c(
+"Adjusted.gross.income",
+"All_Returns_Count",
+"All_Returns_Percent",
+"All_Adjusted.gross.income.less.deficit_Amount",
+"All_Adjusted.gross.income.less.deficit_Percent",
+"All_Average.adjusted.gross.income.less.deficit_Amount",
+"Taxable_Returns_Amount",
+"Taxable_Returns_Percent",
+"Taxable_Adjusted.gross.income.less.deficit_Amount",
+"Taxable_Adjusted.gross.income.less.deficit_Percent",
+"Taxable_Taxable.Income_Count",
+"Taxable_Taxable.Income_Amount",
+"Taxable_Taxable.Income_Percent",
+"Taxable_Income.tax.after.credits_Count",
+"Taxable_Income.tax.after.credits_Amount",
+"Taxable_Income.tax.after.credits_Percent",
+"Taxable_Total.Income.Tax_Amount",
+"Taxable_Total_Percent",
+"Taxable_Total_Taxable.income_Percent",
+"Taxable_Total_Adjusted.gross.income.less.deficit_Percent",
+"Taxable_Average.total.income.tax_Amount"
+)
+# renamed the columns
+df <- get_data[-c(27:198), ]
+# removed empty rows
+df <- df[-c(1:7), ]
+#removed row 1 - 7 (not needed information)
+df <- df %>% clean_names()
+#clean the column names to make it consistent
+glimpse(df)
+```
+Renamed the columns as this is important for the next step when I have to format the structure to a long
+format. The column names will point to how othe structure will be. For example, the period and underscore
+of the naming convention is intentional as the underscore serves as the separator.
+
+# Long format
+```{r long format}
+
+df_tidy <- df %>%
+pivot_longer(
+cols = -`adjusted_gross_income`,
+names_to = c("Return_Type", "Category", "Metric"),
+names_pattern = "^([^_]+)_(.*)_([^_]+)$",
+values_to = "Value"
+)
+
+knitr::kable(df_tidy) %>%
+  kableExtra::kable_styling(font_size = 6)
+```
+Shaping to long format for analysis
+
+# Total tax returns filed
+```{r }
+df_filter <- df_tidy %>%
+filter(Return_Type == "all", Category == "returns", Metric == "count")
+# filtering taxable returns and the percentage for ggplot
+df_filter <- df_filter %>%
+mutate(adjusted_gross_income = fct_collapse(adjusted_gross_income,
+"<25K" = c("No adjusted gross income",
+"$1 under $5,000",
+"$5,000 under $10,000",
+"$10,000 under $15,000",
+"$15,000 under $20,000",
+"$20,000 under $25,000"),
+"25K - <75K" = c("$25,000 under $30,000",
+"$30,000 under $40,000",
+"$40,000 under $50,000",
+"$50,000 under $75,000"),
+"75K - <200K" = c("$75,000 under $100,000",
+"$100,000 under $200,000"
+),
+"200K+" = c("$200,000 under $500,000",
+"$500,000 under $1,000,000",
+"$1,000,000 under $1,500,000",
+"$1,500,000 under $2,000,000",
+"$2,000,000 under $5,000,000",
+"$5,000,000 under $10,000,000",
+"$10,000,000 or more")
+))
+# combine the income levels to smaller groups
+df_filter_sum <- df_filter %>%
+mutate(Value = gsub(",", "", Value), # Remove commas
+Value = as.numeric(Value)) # Convert to numeric
+df_filter_sum <- df_filter_sum %>%
+group_by(adjusted_gross_income) %>%
+summarise(
+sum_return_thous = sum(Value)/1e3,
+)
+
+df_filter_sum<- df_filter_sum %>%
+mutate(adjusted_gross_income = 
+      factor(adjusted_gross_income, levels = 
+      c("<25K", 
+        "25K - <75K",
+        "75K - <200K", 
+        "200K+")))
+                                                                  
+                                  
+ggplot(df_filter_sum, aes(x = adjusted_gross_income, y = sum_return_thous)) +
+geom_col(fill = "steelblue") +
+labs(title = "Count of Tax Returns Filed by Income Group",
+x = "Income Group",
+y = "Count (by thousands)")
+```
+I filter the type of returns here to get the total returns filed by income group. In this dataset, there is a
+difference between all returns and taxable returns so in this case, we are looking at all returns. Since the
+source data had an overwhelming amount of income groups, I combined them to offer a more wider view of
+the analysis.
+
+# Effective tax rate
+```{r }
+
+df_filter_income <- df_tidy %>%
+filter(Return_Type == "taxable",
+Category %in% c("total_income_tax", "taxable_income"),
+Metric %in% c("amount"))
+
+df_filter_income <- df_filter_income %>%
+mutate(adjusted_gross_income = fct_collapse(adjusted_gross_income,
+"<25K" = c("No adjusted gross income",
+"$1 under $5,000",
+"$5,000 under $10,000",
+"$10,000 under $15,000",
+"$15,000 under $20,000",
+"$20,000 under $25,000"),
+"25K - <75K" = c("$25,000 under $30,000",
+"$30,000 under $40,000",
+"$40,000 under $50,000",
+"$50,000 under $75,000"),
+"75K - <200K" = c("$75,000 under $100,000",
+"$100,000 under $200,000"
+),
+"200K+" = c("$200,000 under $500,000",
+"$500,000 under $1,000,000",
+"$1,000,000 under $1,500,000",
+"$1,500,000 under $2,000,000",
+"$2,000,000 under $5,000,000",
+"$5,000,000 under $10,000,000",
+"$10,000,000 or more")
+))
+
+# combine the income levels to smaller groups
+df_filter_incometax <- df_filter_income %>%
+mutate(Value = gsub(",", "", Value),
+Value = as.numeric(Value))
+df_avg_taxes <- df_filter_incometax %>%
+group_by(adjusted_gross_income) %>%
+summarise(avg_paid_taxes = sum(Value[Category == "total_income_tax"], na.rm = TRUE) /
+sum(Value[Category == "taxable_income"], na.rm = TRUE))
+
+df_avg_taxes<- df_avg_taxes %>%
+mutate(adjusted_gross_income = factor(adjusted_gross_income, 
+                               levels = c("<25K", 
+                                          "25K - <75K",
+                                          "75K - <200K",
+                                          "200K+")))
+                                                                        
+                                                                    
+ggplot(df_avg_taxes, aes(x = adjusted_gross_income, y = avg_paid_taxes)) +
+geom_col(fill = "steelblue") +
+labs(title = "Effective tax rate by Income Group",
+x = "Income Group",
+y = "Effective tax rate")
+
+```
+Same thing I did here with the total count of returns. The only difference here is that I also average to get
+the effective tax rate, which is the total income tax/total count of taxable income returns.
+
+# Conclusion
+
+
+After transforming the file to a structured table that we can use for analysis, I aggregated and grouped the
+income categories to generate insights. One key observation is that the majority of tax filers fall within the
+$25K to under $75K income bracket, as indicated by the total number of returns filed for the 2022 tax year.
+Additionally, I calculated the effective tax rate for each income group by dividing the total income tax paid
+by the total number of returns, allowing for a comparative view of tax burdens across different income levels.
+For future analysis, it would be valuable to compare tax years, particularly during periods of major tax
+reform, such the Tax Cuts and Jobs Act (2018–2025). Examining changes in tax rates, income distribution,
+and overall tax burdens over time could provide deeper insights into the impact of tax policy.
+Take Away from the Assignment- The janitor package, particularly the clean_names() function, proved to
+be extremely useful. It ensures consistent formatting of column names, which is essential when applying
+pattern-based transformations or reshaping the data into a long format.

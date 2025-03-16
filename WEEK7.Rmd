@@ -1,0 +1,192 @@
+---
+title: 'DATA 607: Week 7'
+author: "Cindy Lin"
+date: "2025-03-11"
+output:
+  pdf_document: default
+  html_document: default
+  
+---
+
+# INTRODUCTION
+
+Week 7 goal is to work with different data format: HTML, JSON, XML, and parquet. The first step is to convert the received data to each format and then perform analysis. 
+
+## Loading library
+
+```{r library}
+
+options(repos = c(CRAN = "https://cloud.r-project.org/"))
+install.packages("arrow")
+
+library (tidyverse)
+library(knitr) #HTML
+library(jsonlite) #JSON
+library(xml2) #XML
+library(arrow) #Parquet
+library(rvest) #HTML
+```
+I am loading the tidyverse library because there are functions that can help tidy the loaded data. 
+
+## Loading the data 
+```{r getdata, message=FALSE}
+get_data <- read.csv("CUNYMart.csv", header = TRUE, sep = ",")
+
+```
+Loading the data 
+
+## HTML - PRO and CON
+```{r html}
+html <-kable(get_data, format = "html")
+
+writeLines(html, "get_data.html") 
+#save html file to directory
+
+print(html)
+```
+
+PRO - 
+HyperText Markup Language is useful for webpages and styling the content and formatting for display so from the visualization aspect of analysis, it is useful as a presentation tool. Since every browser supports it, it is "inexpensive" in the regards that you do not need extra software to support it. 
+
+CON - 
+It is static and the data in the html format is unstructured so it is not ideal of analysis. I would not select this to store inventory.
+
+## ## JSON - PRO and CON
+```{r JSON}
+
+json_data <- toJSON(get_data, pretty = TRUE)
+write_json(get_data, "get_data.json")
+#save json to directory
+
+print(json_data) 
+
+```
+
+PRO - JavaScript Object Notation (JSON) is easy to read and simple text format. It uses key-value pairs which makes the structure easy to understand so in the case of the CUNYMart data, I can see each item as it's own part. 
+
+CON - It is not ideal for large data set. Since each item is its own part, I would imagine it is error prone and can get overwhemling with a large dataset. For example, if I have the same category, item name and brand but price differently, each price point would be it's own part. 
+
+## XML - PRO and CON
+```{r XML}
+xml_doc <- xml_new_root("inventory")
+
+for (i in 1:nrow(get_data)) {
+  item <- xml_add_child(xml_doc, "item")
+  xml_add_child(item, "Category", get_data$Category[i])
+  xml_add_child(item, "Item.Name", get_data$Item.Name[i])
+  xml_add_child(item, "Item.ID", get_data$Item.ID[i])
+  xml_add_child(item, "Brand", get_data$Brand[i])
+  xml_add_child(item, "Price", get_data$Price[i])
+  xml_add_child(item, "Variation.ID", get_data$Variation.ID[i])
+  xml_add_child(item, "Variation.Details", get_data$Variation.Details[i])
+}
+
+write_xml(xml_doc, "get_data.xml")
+#save xml to directory
+
+print(xml_doc)
+```
+
+XML - extensible markup language similar to HTML but unlike HTML, it focuses on carrying data - not just how the data looks. 
+
+PRO - like the other format, it is easily readable by a human. It also can nest elements which I can see as helpful for complex relationships.So if I have multiple categories for an item, this would be helpful in storing.  
+
+CON - the file size can be inefficient which leads to slower processing. For large inventory dataset, this might not be ideal.  
+
+## Parquet - PRO and CON
+```{r Parquet}
+par <- write_parquet(get_data, "get_data.parquet")
+# save parquet to directory 
+
+print(par)
+```
+
+Parquet - a storage file format that stores data by columns and allow for fast processing.
+
+PRO - it is structured data unlike JSON and it can read only the necessary information unlike some format where it reads all the data. 
+
+CON - it might not be as widely supported as the other format. For example, with HTML - all browser supports it so regardless of the software installed, it can be opened. 
+
+## Analysis JSON 
+```{r analysis JSON}
+json_data <- fromJSON("get_data.json")
+
+top_ten_expensive_json <- json_data %>%
+  arrange(desc(Price)) %>%
+  select(Item.Name, Price, Category, Variation.Details) %>%
+  head(10)
+
+print(top_ten_expensive_json)
+
+```
+Grab the JSON file from directory and used that for analysis to see the top ten most expensive items. 
+This was easily done (being able to just grab it from the file and work on it).
+
+## Analysis XML
+```{r analysis xml}
+xml_data <- read_xml("get_data.xml")
+
+print(xml_data)
+
+# Extract all <item> elements
+xml_items <- xml_data %>% xml_find_all("//item")
+
+
+xml_df <- tibble(
+  Category = xml_items %>% xml_find_first("Category") %>% xml_text(),
+  Item_Name = xml_items %>% xml_find_first("Item.Name") %>% xml_text(),
+  Item_ID = xml_items %>% xml_find_first("Item.ID") %>% xml_text() %>% as.integer(),
+  Brand = xml_items %>% xml_find_first("Brand") %>% xml_text(),
+  Price = xml_items %>% xml_find_first("Price") %>% xml_text() %>% as.numeric(),
+  Variation_ID = xml_items %>% xml_find_first("Variation.ID") %>% xml_text(),
+  Variation_Details = xml_items %>% xml_find_first("Variation.Details") %>% xml_text()
+)
+
+top_ten_expensive_xml <- xml_df %>%
+  arrange(desc(Price)) %>%
+  select(Item_Name, Price, Category) %>%
+  head(10)
+
+print(top_ten_expensive_xml)
+
+```
+Grab the XML file from directory and used that for analysis to see the top ten most expensive items. 
+This was more work than JSON as I had to convert the file and the column names. 
+
+## Analysis HTML
+```{r analysis HTML}
+
+html_data <- read_html("get_data.html")
+
+html_table <- html_data %>%
+  html_element("table") %>%  
+  # Get the first table
+  
+  html_table(fill = TRUE)    
+# Convert it to a data frame
+
+# View the extracted table
+print(html_table)
+
+top_ten_expensive_html <- html_table %>%
+  arrange(desc(Price)) %>%
+  select(Item.Name, Price, Category) %>%
+  head(10)
+print(top_ten_expensive_html)
+```
+Grab the HTML file from directory and used that for analysis to see the top ten most expensive items. This was similar to XML as I had to convert and go through extra steps. Up to this point, working with JSON file is much easier than XML and HTML
+
+## Analysis parquet
+```{r analysis parquet}
+parquet_data <- read_parquet("get_data.parquet")
+
+top_ten_expensive_parquet <- parquet_data %>%
+  arrange(desc(Price)) %>%
+  select(Item.Name, Price, Category) %>%
+  head(10)
+print(top_ten_expensive_parquet)
+```
+Grab the parquet file from directory and used that for analysis to see the top ten most expensive items. This was similar to JSON as I did not have to format like I had to do for XML and HTML.
+
+# CONCLUSION
+Depending on the goal, each format has it's own pros and cons. Since this data set was small, I think it worked well with all four formats. I think the impact of each pros and cons is minimal in that aspect, but if we are looking at a larger data set, I would prefer parquet. 
