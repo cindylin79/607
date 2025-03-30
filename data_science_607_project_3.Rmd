@@ -638,7 +638,7 @@ ggplot(avg_salary_by_skill, aes(x = reorder(skill, avg_salary), y = avg_salary, 
 
 The following code adjusts changes the column type in the original data set and establishes a clean data set within the database.
 
-```{r creating the clean data set in the database}
+```{r creating the clean data set in the database, , results = 'hide'}
 glassdoor_data3$python <- as.integer(glassdoor_data3$python)
 glassdoor_data3$r_lang <- as.integer(glassdoor_data3$r_lang)
 glassdoor_data3$spark <- as.integer(glassdoor_data3$spark)
@@ -647,10 +647,10 @@ glassdoor_data3$excel <- as.integer(glassdoor_data3$excel)
 
 dbWriteTable(
   con,
-  name = "glassdoor_clean",    # this will be the new table name in MySQL
+  name = "glassdoor_clean",   
   value = glassdoor_data3,
   row.names = FALSE,
-  overwrite = TRUE             # change to FALSE if you want to append
+  overwrite = TRUE             
 )
 
 dbListTables(con)

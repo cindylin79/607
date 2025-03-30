@@ -1,0 +1,87 @@
+---
+title: 'DATA 607: Week 9'
+author: "Cindy Lin"
+date: "2025-03-26"
+output:
+  pdf_document: default
+  html_document: default
+  
+---
+
+# INTRODUCTION
+
+Week 9 assignment's goal is to pull information from one of the New York Times API and read it in the JSON data, and transform it into an R Data Frame.
+
+
+## Loading library
+
+```{r library, include= FALSE}
+
+install.packages("httr", repos = "https://cloud.r-project.org")
+options(repos = c(CRAN = "https://cloud.r-project.org/"))
+
+
+install.packages("jsonlite")
+install.packages("dplyr") 
+
+```
+installing the necessary packages for API and JSON data
+
+
+
+```{r API}
+
+library(httr)
+library(jsonlite)
+library(dplyr)
+library(purrr)
+
+
+api_key <- Sys.getenv("API")
+url <- "https://api.nytimes.com/svc/books/v3/lists/best-sellers/history.json"
+
+fetch_page <- function(offset = 0) {
+  response <- GET(url, query = list(
+    `api-key` = api_key,
+    offset = offset
+  ))
+  result <- fromJSON(content(response, as = "text", encoding = "UTF-8"))
+  
+  return(result$results)
+}
+
+offsets <- seq(0, 100, by = 20)  
+all_books <- map_dfr(offsets, fetch_page)
+
+head(all_books)
+
+```
+The default for the NYT API is set to limit to fetch 20 but I wanted to have more results so utilized "offset" to get 100 rows by dataset. 
+
+
+```{r analysis}
+
+library(dplyr)
+
+top_authors <- all_books %>%
+  group_by(author) %>%
+  summarise(book_count = n()) %>%
+  arrange(desc(book_count))
+
+head(top_authors, 5)
+
+
+top_publishers <- all_books %>%
+  group_by(publisher) %>%
+  summarise(book_count = n()) %>%
+  arrange(desc(book_count))
+
+head(top_publishers, 5)
+
+
+```
+This analyze the top 5 author and the top 5 publisher in the data set. 
+
+# CONCLUSION
+This was a straight forward approach to acquiring the data through an API. As long as I can attain the API key, I was able to pull the data into a data frame. 
+
