@@ -1,0 +1,235 @@
+---
+title: 'DATA 607: Final Project'
+author: "Cindy Lin"
+date: "2025-05-03"
+output:
+  pdf_document:
+    latex_engine: xelatex
+  html_document:
+    df_print: paged
+---
+
+```{r libraries}
+library(dplyr)
+library(DBI)
+library(RMySQL)
+library(stringr)
+library(tidyRSS)
+library(purrr)
+library(tidyquant)
+library(syuzhet)
+library(ggplot2)
+```
+
+# INTRODUCTION
+Stock price movement are driven by different forces. It can be fundamental, technical, or even just how the general public perceives the company. For the purpose of this project, we will look at the fundamental which is the company's performance and the public sentiment using the news. 
+
+
+
+
+```{r pull yahoo finance news}
+
+stocks <- c("UBER", "DASH", "Z", "DIS", "CVNA")
+
+get_yahoo_news_filtered <- function(symbol) {
+  rss_url <- paste0("https://feeds.finance.yahoo.com/rss/2.0/headline?s=", symbol, "&region=US&lang=en-US")
+  feed <- tidyfeed(rss_url)
+
+  feed <- feed %>%
+    filter(
+     
+      str_detect(tolower(item_title), fixed(tolower(symbol))) |
+      str_detect(tolower(item_description), fixed(tolower(symbol)))
+    ) %>%
+    mutate(symbol = symbol)
+  return(feed)
+}
+
+all_news_filtered <- lapply(stocks, get_yahoo_news_filtered) %>%
+  bind_rows()
+#lapply runs the function in a vector
+#bind_rows put the result into dataframe as one
+
+
+head(all_news_filtered %>% select(symbol, item_title, symbol))
+
+
+```
+Since I have five stocks, I need to create a function to find and filter through the news. The idea is that I would continuously pull the news each day prior to the earning report and on the day before earnings, I would generate sentiment on it. 
+
+
+```{r load into MySQL databae}
+
+news_data <- all_news_filtered %>%
+  select(symbol, item_title, item_description, item_pub_date, item_link, item_description) %>%
+  mutate(item_title = substr(item_title, 1, 255))
+
+
+
+con <- dbConnect(
+  RMySQL::MySQL(),
+  user = "root",
+ 
+  dbname = "mydatabase",
+  host = "127.0.0.1"
+)
+
+
+  dbWriteTable(con, name = "stock_news", value = news_data, append = TRUE, row.names = FALSE)
+
+```
+I saved the pulled news articles into MYSQL database and then in the news_data table. 
+
+```{r pull from database}
+dbListTables(con)
+
+news_df <- dbGetQuery(con, "SELECT * FROM stock_news")
+
+
+
+
+```
+I pulled from saved articles in the database and pull into R
+
+
+```{r sentiment}
+
+
+news_df <- news_data %>%
+  mutate(full_text = paste(item_title, item_description, sep = ". "))
+
+
+news_df <- news_df %>%
+  rowwise() %>%
+  mutate(sentiment = mean(syuzhet::get_sentiment(syuzhet::get_sentences(full_text)), na.rm = TRUE)) %>%
+  ungroup()
+
+
+sentiment_by_stock <- news_df %>%
+  group_by(symbol) %>%
+  summarise(avg_sentiment = mean(sentiment, na.rm = TRUE))
+
+
+
+```
+Using Syuzhet sentiment analysis, each stocks was calculated and scored on how positive or negative the news was. Here the most positive was UBER, and the least positive was DIS. 
+
+```{r earnings}
+earnings <- read.csv("earnings.csv")
+
+sentiment_by_stocks <- read.csv("news_data.csv")
+
+print(earnings)
+print(sentiment_by_stocks)
+```
+I have the earning results in a CSV file so I am loading it here. 
+
+```{r combined}
+combined <- merge(earnings, sentiment_by_stocks, by = "symbol")
+
+combined$earnings_result <- with(combined, ifelse(
+  EPS > EPS_Forecast, "beat",
+  ifelse(EPS < EPS_Forecast, "miss", "meet")
+))
+
+head(combined)
+
+```
+After loading the CSV file with the earning information, I want to know how the stocks performed, if they miss, beat, or meet the expectation of the forecast. 
+
+```{r graph_one}
+
+library(ggplot2)
+
+ggplot(combined, aes(x = avg_sentiment, y = Percent_Surprise, label = symbol)) +
+  geom_point(size = 4, color = "blue") +
+  geom_text(nudge_x = 0.01, nudge_y = 2) +
+  labs(
+    title = "Sentiment Score vs. Earnings Percent Surprise",
+    x = "Sentiment Score",
+    y = "Percent Surprise (%)"
+  ) +
+  theme_minimal()
+
+```
+Here I am plotting the sentiment score with the earning results. The higher the score, the more positive it is. Here we see that while UBER had the most positive sentiment, it had a significant positive performance. While DASH had the second most positively scored sentiment, it had the lowest performance expectation. 
+
+```{r cumulative_returns}
+
+earnings_dates <- data.frame(
+  symbol = c("UBER", "DASH", "Z", "DIS", "CVNA"),
+  earnings_date = as.Date(c("2025-05-07", "2025-05-06", "2025-05-07", "2025-05-07", "2025-05-07"))
+)
+
+combined <- left_join(combined, earnings_dates, by = "symbol")
+
+
+
+
+get_price_window <- function(symbol, date) {
+  tq_get(symbol, from = date - 2, to = date + 2) %>%
+    mutate(symbol = symbol, earnings_date = date)
+}
+
+
+
+price_data <- map2_df(combined$symbol, combined$earnings_date, get_price_window)
+
+
+
+cumulative_returns <- price_data %>%
+  filter(date >= earnings_date - 1 & date <= earnings_date + 1) %>%
+  group_by(symbol) %>%
+  arrange(date)
+
+
+final_df <- cumulative_returns %>%
+  left_join(combined, by = "symbol")
+
+print(final_df)
+
+```
+I want to find the price before and after the earning so since the earning was released 5/7/2025, I looked at the movement on 5/6 and 5/8 as well. 
+```{r graph_two}
+library(ggplot2)
+
+price_movement_3day <- final_df%>%
+  group_by(symbol) %>%
+  summarize(
+    start_price = first(adjusted),
+    end_price = last(adjusted),
+    return_3day = (end_price - start_price) / start_price
+  )
+
+
+sentiment_analysis <- price_movement_3day %>%
+  left_join(combined, by = "symbol")
+
+library(ggplot2)
+
+ggplot(sentiment_analysis, aes(x = avg_sentiment, y = return_3day, label = symbol)) +
+  geom_point(size = 3, color = "steelblue") +
+  geom_text(nudge_y = 0.005) +
+  labs(title = "Sentiment vs 3-Day Return After Earnings",
+       x = "Sentiment Score (Pre-Earnings)",
+       y = "3-Day Stock Return")
+```
+
+
+Here we have the 3 day price movement return and comparing it with the sentiment of each stocks. The highest return is DIS which has the lowest positive sentiment score. The two highest sentiment stocks had negative returns from the pre-earning price to the post earning price. 
+
+```{r correlation}
+cor_test <- cor.test(sentiment_analysis$avg_sentiment, sentiment_analysis$return_3day)
+cor_test
+ 
+
+```
+The correlation coefficient is -0.639 which means that it has a negative relationship between sentiment and the 3-day return. It appears that stocks with higher pre-earnings sentiment perform worse. However, we do have a wide range for the confidence interval which makes sense since we have a low sample size. 
+
+
+# CONCLUSION
+The hypothesis of this project is simple: positive news about a company should be followed by positive performance, reflected in a higher stock price. While this idea appears intuitive, that’s not what was found here. 
+
+In this analysis, even when both sentiment and earnings were positive, price movement in the days following earnings did not always align. The assumption that one factor directly and proportionally impacts the other does not consistently hold. In fact, we observed cases where stocks with strong sentiment and solid earnings still experienced a decline in price post-earnings. However, one theory could be that the sentiment was so positively strong, it drove the stock price higher than its worth. When the earnings report is release, it corrected the price which resulted what looks like a “decline”. 
+
+In short, while sentiment and earnings may shape investor outlook, they do not guarantee a specific price response. However, this is also a very small sample of stocks and the news that drove the sentiment was also very limited. Even with that said, it is interesting to see the relationship between market sentiment and technical factors, and how that affects the short term return of a stock. 

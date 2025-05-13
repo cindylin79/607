@@ -1,5 +1,5 @@
 ---
-title: 'DATA 607: Week 10'
+title: 'DATA 607: Week 10 resubmit'
 author: "Cindy Lin"
 date: "2025-04-01"
 output:

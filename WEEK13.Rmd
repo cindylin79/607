@@ -1,0 +1,124 @@
+---
+title: 'DATA 607: Week 11'
+author: "Cindy Lin"
+date: "2025-04-09"
+output:
+  pdf_document: default
+ 
+  
+---
+
+# INTRODUCTION
+
+Week 11 assignment's goal is to learn about recommender's system. The most common example of this is the recommendations that Netflix or amazon provides based on the choices selected prior. For this assignment we will be using the Global Baseline Estimate which outputs the predicted rating. The formula is adding the global average rating and the user bias and the item bias. The bias will be deviation of the rating. 
+
+## Loading library
+
+```{r library, include= FALSE}
+library (tidyverse)
+
+```
+I am loading the tidyverse library because there are functions that can help tidy the loaded data
+
+## Loading the data
+```{r getdata, message=FALSE}
+
+get_data <- read.csv("movierating.csv", header = TRUE)
+
+get_data
+
+```
+Load the csv file from my working directory and viewing the data. 
+
+
+## Global Average Rating
+```{r, message=FALSE}
+
+global_avg_rating <- mean(get_data$Rating, na.rm = TRUE)
+
+print(global_avg_rating)
+
+
+```
+2.8 is the global average rating, which means that the total average of all users and movies. 
+
+## User Bias
+```{r user bias}
+user_bias <- get_data %>%
+  filter(!is.na(Rating)) %>%
+  group_by(PersonID) %>%
+  summarize(b_u = mean(Rating - global_avg_rating), .groups = "drop")
+
+user_bias
+
+```
+
+The user bias is the users rating relative to the global average so how much it deviates. This is done by adding the average of each users and minus the global average. For example, id 1 had an user average of 2 (which means their average of what they rated in all the movies ), with the global average = 2.8 (2 - 2.8 = -0.8).
+
+## Movie Bias
+
+```{r movie bias}
+
+movie_bias <- get_data %>%
+  filter(!is.na(Rating)) %>%
+  group_by(Movies) %>%
+  summarize(b_i = mean(Rating - global_avg_rating), .groups = "drop")
+
+movie_bias
+
+```
+The movie bias is the movie rating relative to the global average so how much it deviates. This is done by adding the average of each movie and minus the global average. For example, Beetlejuice had an user average of 1.333, with the global average = 2.8 (1.333 - 2.8 = -1.47).
+
+## Predicted Value
+```{r }
+predicted_value <- get_data %>%
+  left_join(user_bias, by = "PersonID") %>%
+  left_join(movie_bias, by = "Movies")
+
+predicted_value <- predicted_value %>%
+  mutate(
+    b_u = ifelse(is.na(b_u), 0, b_u),
+    b_i = ifelse(is.na(b_i), 0, b_i),
+    predicted_rating = 2.8 + b_u + b_i
+  )
+
+predicted_value
+
+
+```
+ 
+Using the global baseline estimate formula, predicted value was added. For those with ratings already, we can see the difference of how far and close the actual value is and for those that do not have the values, we can then use the predicted value. The prediction comes from what we know about the user and about the movie as well as the average of everyone else. 
+
+## Actual and Predicted
+```{r actual and predicted}
+rating_comparison <- predicted_value %>%
+  group_by(Movies) %>%
+  summarize(
+    actual_avg_rating = mean(Rating, na.rm = TRUE), 
+    predicted_avg_rating = mean(predicted_rating, na.rm = TRUE),
+    n = sum(!is.na(Rating))
+  )
+
+rating_comparison_long <- rating_comparison %>%
+  select(Movies, actual_avg_rating, predicted_avg_rating) %>%
+  pivot_longer(cols = c(actual_avg_rating, predicted_avg_rating),
+               names_to = "Type", values_to = "Rating")
+
+rating_comparison_clean <- rating_comparison_long %>%
+  filter(!is.na(Movies))
+
+
+ggplot(rating_comparison_long, aes(x = reorder(Movies, Rating), y = Rating, fill = Type)) +
+  geom_col(position = "dodge") +
+  coord_flip() +
+  labs(title = "Actual vs Predicted Average Ratings per Movie",
+       x = "Movie", y = "Average Rating") +
+ 
+  theme_minimal()
+
+
+```
+I wanted to see the actual and predicted comparison so I used ggplot. For the most part, the predicted and actual are pretty close with the predicted being more generous but not by much. Wicked and Dune: Part Two are empty so only the user bias is used for those predicted rating, unlike the others where users and movie bias is used. 
+
+# Conclusion 
+This was an interesting exercise as I can see it being applicable in a lot of cases. While we probably encountered this in the business world on products, I can see it also being applicable in other under-served area. With the formula being focus on two parts (items and users), I think an interesting project could be aligning this to course recommendations in higher education. While majors are supposed to be prescribed, there are usually a lot of room for flexibility, especially if we are talking about undergraduate degrees. I think having some recommender model with courses (with a similar model as amazon or Netflix) would be interesting to see. 
